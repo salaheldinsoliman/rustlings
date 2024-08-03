@@ -17,29 +17,41 @@
 
 // Don't change the lines below.
 #![forbid(unused_imports)]
-use std::{sync::Arc, thread};
+use std::{sync::{Arc, Mutex}, thread};
 
 fn main() {
-    let numbers: Vec<_> = (0..100u32).collect();
+  
+    let mut my_vec = Vec::new();
 
-    // TODO: Define `shared_numbers` by using `Arc`.
-    // let shared_numbers = ???;
+    for i in 0..100 {
+        my_vec.push(i);
+    }
 
-    let mut join_handles = Vec::new();
+    let my_vec_shared = Arc::new(Mutex::new(my_vec));
 
-    for offset in 0..8 {
-        // TODO: Define `child_numbers` using `shared_numbers`.
-        // let child_numbers = ???;
+    
+    let mut handles = vec![];
+    for i in 0..8 {
 
-        let handle = thread::spawn(move || {
-            let sum: u32 = child_numbers.iter().filter(|&&n| n % 8 == offset).sum();
-            println!("Sum of offset {offset} is {sum}");
+        let vec_copy = Arc::clone(&my_vec_shared);
+        let handle = thread::spawn(move ||{
+            let mut sum=0;
+            for y in (i..100).step_by(8) {
+
+                let vecc = vec_copy.lock().unwrap();
+                sum +=  vecc[y]
+            }
+
+            println!("sum from {i}th thread is: {sum}")
         });
 
-        join_handles.push(handle);
+        handles.push(handle);
     }
 
-    for handle in join_handles.into_iter() {
-        handle.join().unwrap();
+    for handle in handles {
+        handle.join().unwrap()
     }
+
+
+
 }
